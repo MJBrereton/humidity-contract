@@ -3,7 +3,7 @@ pragma solidity >=0.4.22 <0.8.0;
 
 contract HumidityContract {
     address public supplier;
-    uint private humidity;
+    uint private humidity = 5;
 
     function humidityViolation(uint _humidity) public {
         humidity = _humidity;

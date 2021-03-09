@@ -1,26 +1,76 @@
 const Web3 = require('web3');
-const artifact = require('../../build/contracts/HumidityContract.json');
-var contract = require("@truffle/contract");
-var artifactor = require("@truffle/artifactor");
+const contractBuild = require('../../build/contracts/HumidityContract.json');
+// npm package usage says to use var idk why
+const contract = require("@truffle/contract");
+const artifactor = require("@truffle/artifactor");
 
-// const TruffleContract = require('@truffle/contract');
+const net = require("net");
 
-// var provider = new Web3(Web3.givenProvider || "ws://localhost:7545");
-// var contract = require("@truffle/contract");
-
-// creates a web3 provider variable
 let web3 = new Web3(/*Web3.givenProvider || */"ws://localhost:7545");
+let myContract = new web3.eth.Contract(contractBuild.abi, contractBuild.networks[5777].address);
+let humidity = 0;
 
-// THIS ACTUALLY WORKS, IF ADDRESS IS UPDATED
-let myContract = new web3.eth.Contract(artifact.abi, '0xfF838E24749EE85188c4D4c6b4285C52A416454C');
-myContract.methods.getHumidity().call()
+myContract.methods.resetContract().send({from:'0xa9354D87BA1c8F0b49Bde922831fe8C587176A88'})
 .then(console.log);
 
-myContract.methods.humidityViolation(128).send({from:'0x23d4e75F0B427a97f9C3EA818033c4E5dbeC6A6e'})
-.then(console.log);
+const server = net.createServer(socket => {
+  socket.write("Hello.")
+  socket.on("data", async data => {
+
+    socket.write(data.toString());
+    humidity = parseInt(data.toString());
+    console.log(data.toString());
+
+    // TODO: only execute if getViolated() returns false
+    // i.e. only call the humidity violation function once
+    if (humidity > 80) { 
+      myContract.methods.humidityViolation(humidity).send({from:'0xa9354D87BA1c8F0b49Bde922831fe8C587176A88'})
+      .then(console.log);
+    }
+  })
+});
+
+// on my PC port 8080 is only enabled for private networks
+// will need to change firewall rule for uni
+server.listen(8080);
+
+function resolveViolation() {
+  console.log(myContract.methods.getViolated().call());
+  if (!myContract.methods.getViolated().call()) {
+    
+    console.log('VIOLATION');
+    
+    // send to contract. requires address of sender
+    myContract.methods.humidityViolation(humidity).send({from:'0x36C8769FFfe0152a3806977A98923c351674e1D5'})
+    .then(console.log);
+  }
+
+}
+
+// creates a web3 provider object
+// can see methods on web3
+// let web3 = new Web3.default(/*Web3.givenProvider || */"ws://localhost:7545");
+// can't see methods on web32 but they seem to work
+// let web32 = new Web3("ws://localhost:7545");
+// trying to create a contract object
+// can't see methods on humidityContract (they also don't work yet but probs my fault)
+// let humidityContract = contract(contractBuild);
 
 
-// myContract.methods.myMethod([param1[, param2[, ...]]]).send(options[, callback])
+
+// if (humidity > 65) {
+//   // create a contract object with address of smart contract
+  
+//   // call contract
+//   myContract.methods.getHumidity().call()
+//   .then(console.log);
+  
+//   // send to contract. requires address of sender
+//   myContract.methods.humidityViolation(humidity).send({from:'0x36C8769FFfe0152a3806977A98923c351674e1D5'})
+//   .then(console.log);
+// }
+
+
 
 // Set up access for a deployed smart contract
 // this is a get json request. the first param is the address to request, the function param is optional
@@ -32,28 +82,29 @@ myContract.methods.humidityViolation(128).send({from:'0x23d4e75F0B427a97f9C3EA81
 //   humidiyContract.setProvider(web3)
 // });
 
-var humidiyContract = contract(artifact);
-
-try {
-  humidiyContract.setProvider(web3);
-} catch (e) {
-  console.error(e);
-  // expected output: "Parameter is not a number!"
-};
-
-// Put a call function here
-var humidityContractInstance;
+// let humidiyContract = contract(contractBuild);
 
 
-humidiyContract.deployed().then(function(instance) {
-  humidityContractInstance = instance;
+// try {
+//   humidiyContract.setProvider(web3);
+// } catch (e) {
+//   console.error(e);
+//   // expected output: "Parameter is not a number!"
+// };
 
-  return humidityContractInstance.getHumidity.call();
-}).then(function(humidity) {
-  console.log(humidity);
-}).catch(function(err) {
-  console.log(err.message);
-});
+// // Put a call function here
+// var humidityContractInstance;
+
+
+// humidiyContract.deployed().then(function(instance) {
+//   humidityContractInstance = instance;
+
+//   return humidityContractInstance.getHumidity.call();
+// }).then(function(humidity) {
+//   console.log(humidity);
+// }).catch(function(err) {
+//   console.log(err.message);
+// });
 
 
 // put a send function here

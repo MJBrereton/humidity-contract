@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Web 3 Demo</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+
+    <script src='node_modules/web3/dist/web3.min.js'></script>
+    <!-- <script src='build/contracts/HumidityContract.json'></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js" type="text/javascript"></script> -->
+</head>
+
+<body>
+
+    Web 3 Demo
+    <br >
+    <button onclick="printStatus();">Print Contract Status</button>
+    <button onclick="changeStatus();">Send Humidity Violation</button>
+    <button onclick="resetContract();">Reset Contract</button>
+    <br /><br />
+    <span id="status">Loading...</span>
+
+    <script type="text/javascript">
+        
+
+        async function loadWeb3() {
+            if (window.ethereum) {
+                window.web3 = new Web3(window.ethereum);
+                window.ethereum.enable();
+            }
+        }
+
+
+        async function loadContract() {
+            return await new window.web3.eth.Contract([
+                {
+                "inputs": [],
+                "payable": false,
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+                },
+                {
+                "constant": false,
+                "inputs": [
+                    {
+                    "internalType": "uint256",
+                    "name": "_humidity",
+                    "type": "uint256"
+                    }
+                ],
+                "name": "humidityViolation",
+                "outputs": [],
+                "payable": false,
+                "stateMutability": "nonpayable",
+                "type": "function"
+                },
+                {
+                "constant": true,
+                "inputs": [],
+                "name": "getHumidity",
+                "outputs": [
+                    {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                    }
+                ],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+                },
+                {
+                "constant": true,
+                "inputs": [],
+                "name": "getViolated",
+                "outputs": [
+                    {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                    }
+                ],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+                },
+                {
+                "constant": false,
+                "inputs": [],
+                "name": "resetContract",
+                "outputs": [],
+                "payable": false,
+                "stateMutability": "nonpayable",
+                "type": "function"
+                }
+            ], '0x18850ec4F37D80009023ef41aE73A39A8eC039DF'
+
+
+            )
+        }
+
+        async function getCurrentAccount() {
+            const accounts = await window.web3.eth.getAccounts();
+            return accounts[0];r
+        }
+        
+        async function printStatus() {
+            updateStatus('fetching status');
+            const status = await window.contract.methods.getViolated().call();
+            updateStatus(`violation status: ${status}`);
+        }
+
+        async function resetContract() {
+            updateStatus('resetting contract');
+            const account = await getCurrentAccount();
+            const status = await window.contract.methods.resetContract().send({ from: account });
+            updateStatus('Contract reset');
+        }
+
+        async function changeStatus() {
+            const value = 80;
+            updateStatus(`Updating humidity with ${value}`);
+            const account = await getCurrentAccount();
+            const status = await window.contract.methods.humidityViolation(value).send({ from: account });
+            updateStatus('Updated.');
+        }
+
+        async function load() {
+            await loadWeb3();
+            window.contract = await loadContract();
+            updateStatus('Ready!');
+        }
+
+        function updateStatus(status) {
+            const statusEl = document.getElementById('status');
+            statusEl.innerHTML = status;
+            console.log(status);
+        }
+
+        load();
+        
+    </script>
+</body>
+
+</html>

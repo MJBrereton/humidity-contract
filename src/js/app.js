@@ -1,16 +1,18 @@
+
 const Web3 = require('web3');
 const contractBuild = require('../../build/contracts/HumidityContract.json');
 // npm package usage says to use var idk why
 const contract = require("@truffle/contract");
 const artifactor = require("@truffle/artifactor");
-
 const net = require("net");
 
 let web3 = new Web3(/*Web3.givenProvider || */"ws://localhost:7545");
 let myContract = new web3.eth.Contract(contractBuild.abi, contractBuild.networks[5777].address);
 let humidity = 0;
 
-myContract.methods.resetContract().send({from:'0xa9354D87BA1c8F0b49Bde922831fe8C587176A88'})
+console.log('running');
+
+myContract.methods.resetContract().send({from:'0xb501480c219A19C17D13DB21837C8d309Ed739Bb'})
 .then(console.log);
 
 const server = net.createServer(socket => {
@@ -30,9 +32,10 @@ const server = net.createServer(socket => {
   })
 });
 
+
 // on my PC port 8080 is only enabled for private networks
 // will need to change firewall rule for uni
-server.listen(8080);
+server.listen(12100);
 
 function resolveViolation() {
   console.log(myContract.methods.getViolated().call());
@@ -46,6 +49,14 @@ function resolveViolation() {
   }
 
 }
+
+function myfunction() {   
+  document.write("testing intervals");  
+  var intervalId = window.setInterval(function(){
+    console.log('interval')
+  }, 5000);
+}
+
 
 // creates a web3 provider object
 // can see methods on web3

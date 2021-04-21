@@ -1,6 +1,6 @@
 
 const Web3 = require('web3');
-const contractBuild = require('../../build/contracts/HumidityContract.json');
+const contractBuild = require('../../build/contracts/SmartContract.json');
 // npm package usage says to use var idk why
 const contract = require("@truffle/contract");
 const artifactor = require("@truffle/artifactor");
@@ -9,28 +9,63 @@ const net = require("net");
 let web3 = new Web3(/*Web3.givenProvider || */"ws://localhost:7545");
 let myContract = new web3.eth.Contract(contractBuild.abi, contractBuild.networks[5777].address);
 let humidity = 0;
+let doorOpen = false;
+let acceleration = 0;
+
+const deviceAccount = '0x1f63897bA94a7B2A4b54224977D0E0D033bbba1A'
 
 console.log('running');
 
-myContract.methods.resetContract().send({from:'0xb501480c219A19C17D13DB21837C8d309Ed739Bb'})
+myContract.methods.resetContract().send({from:deviceAccount})
 .then(console.log);
 
+let dataString = '';
+let buffer = '';
 const server = net.createServer(socket => {
   socket.write("Hello.")
-  socket.on("data", async data => {
-
-    socket.write(data.toString());
-    humidity = parseInt(data.toString());
+  socket.on("data", data => {
+    
+    dataString = dataString.concat(data.toString());
     console.log(data.toString());
+    while (dataString.includes('~')) {
+      let split = dataString.split('~', 1);
+      dataString = split[0];
+      buffer = split[1];
+      if (buffer == undefined) {
+        buffer = '';
+      }
+      console.log('processed data: ', dataString);
+      humidity = parseInt(dataString.substring(0,2));
+      doorOpen = parseInt(dataString.substring(2,3));
+      acceleration = parseFloat(dataString.substring(3,7));
+      
+      console.log('humidity: ', humidity);
+      console.log('door: ', doorOpen);
+      console.log('accel: ', acceleration);
 
-    // TODO: only execute if getViolated() returns false
-    // i.e. only call the humidity violation function once
-    if (humidity > 80) { 
-      myContract.methods.humidityViolation(humidity).send({from:'0xa9354D87BA1c8F0b49Bde922831fe8C587176A88'})
-      .then(console.log);
+      if (humidity > 80) {
+        myContract.methods.humidityViolation(humidity).send({from:deviceAccount});
+      }
+  
+      if (doorOpen == true) {
+        myContract.methods.doorViolation(doorOpen).send({from:deviceAccount});
+      }
+
+      if (acceleration > 2.5) {
+        // smart contract cannot store floats, so multiply by 100
+        myContract.methods.shockViolation(acceleration * 100).send({from:deviceAccount});
+      }
+
+      dataString = buffer;
     }
+
+
+    // socket echos data back to arduino
+    socket.write(data.toString());
+
   })
 });
+
 
 
 // on my PC port 8080 is only enabled for private networks
@@ -44,7 +79,7 @@ function resolveViolation() {
     console.log('VIOLATION');
     
     // send to contract. requires address of sender
-    myContract.methods.humidityViolation(humidity).send({from:'0x36C8769FFfe0152a3806977A98923c351674e1D5'})
+    myContract.methods.humidityViolation(humidity).send({from:deviceAccount})
     .then(console.log);
   }
 

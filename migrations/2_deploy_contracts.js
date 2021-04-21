@@ -1,5 +1,5 @@
-var HumidityContract = artifacts.require("HumidityContract");
+var SmartContract = artifacts.require("SmartContract");
 
 module.exports = function(deployer) {
-  deployer.deploy(HumidityContract);
+  deployer.deploy(SmartContract);
 };

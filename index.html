@@ -7,14 +7,13 @@
     <title>Web 3 Demo</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <script src='node_modules/web3/dist/web3.min.js'></script>
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
 </head>
 
 <body>
     Web 3 Demo
     <br >
     <button onclick="printStatus();">Print Contract Status</button>
-    <button onclick="changeStatus();">Send Humidity Violation</button>
     <button onclick="resetContract();">Reset Contract</button>
     <br /><br />
     <div id="status">Loading...</div>
@@ -23,7 +22,7 @@
     <script type="text/javascript">
         
         async function loadJSON() {
-            $.getJSON("build/contracts/HumidityContract.json", function(data){
+            $.getJSON("build/contracts/SmartContract.json", function(data){
                 loadContract(data.abi, data.networks[5777].address)
             }).fail(function(){
                 console.log("An error has occurred.");
@@ -40,7 +39,7 @@
 
         async function loadContract() {
             let contract = null;
-            let promise = $.getJSON("build/contracts/HumidityContract.json");
+            let promise = $.getJSON("build/contracts/SmartContract.json");
             await promise.done(async function(data) {
                 contract = new window.web3.eth.Contract(data.abi, data.networks[5777].address);
             })
@@ -64,15 +63,6 @@
             const status = await window.contract.methods.resetContract().send({ from: account });
             updateStatus('contract reset');
             // updateStatus('Contract reset');
-        }
-
-        async function changeStatus() {
-            const value = 80;
-            updateStatus(`Updating humidity with ${value}`);
-            const account = await getCurrentAccount();
-            const status = await window.contract.methods.humidityViolation(value).send({ from: account });
-            updateStatus('humidity updated');
-            // pollContract();
         }
 
         async function load() {
@@ -108,7 +98,7 @@
 
         const interval = setInterval(function() {
             pollContract();
-        }, 5000);
+        }, 3000);
         
     </script>
 </body>

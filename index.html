@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Web 3 Demo</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <script src='node_modules/web3/dist/web3.min.js'></script>
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+</head>
+
+<body>
+    Web 3 Demo
+    <br >
+    <button onclick="printStatus();">Print Contract Status</button>
+    <button onclick="resetContract();">Reset Contract</button>
+    <br /><br />
+    <div id="status">Loading...</div>
+    <div id="contractStatus">Loading Contract State...</div>
+
+    <script type="text/javascript">
+        
+        async function loadJSON() {
+            $.getJSON("build/contracts/SmartContract.json", function(data){
+                loadContract(data.abi, data.networks[5777].address)
+            }).fail(function(){
+                console.log("An error has occurred.");
+            });
+        }
+
+        async function loadWeb3() {
+            if (window.ethereum) {
+                window.web3 = new Web3(window.ethereum);
+                window.ethereum.enable();
+            }
+        }
+
+
+        async function loadContract() {
+            let contract = null;
+            let promise = $.getJSON("build/contracts/SmartContract.json");
+            await promise.done(async function(data) {
+                contract = new window.web3.eth.Contract(data.abi, data.networks[5777].address);
+            })
+            return contract
+        }
+
+        async function getCurrentAccount() {
+            const accounts = await window.web3.eth.getAccounts();
+            return accounts[0];r
+        }
+        
+        async function printStatus() {
+            updateStatus('fetching status');
+            const status = await window.contract.methods.getViolated().call();
+            updateStatus('fetched');
+        }
+
+        async function resetContract() {
+            updateStatus('resetting contract');
+            const account = await getCurrentAccount();
+            const status = await window.contract.methods.resetContract().send({ from: account });
+            updateStatus('contract reset');
+        }
+
+        async function load() {
+            await loadWeb3();
+            window.contract = await loadContract();
+            updateStatus('Ready!');
+        }
+
+        function updateStatus(status) {
+            const statusEl = document.getElementById('status');
+            statusEl.innerHTML = status;
+            console.log(status);
+        }
+
+        async function pollContract() {
+            const violation = await window.contract.methods.getViolated().call();
+            if (violation) {
+                const statusEl = document.getElementById('contractStatus');
+                statusEl.innerHTML = "VIOLATION";
+                statusEl.style.color = "red";
+                statusEl.style.fontSize = "150px";
+                statusEl.style.textAlign = "center";
+            } else {
+                const statusEl = document.getElementById('contractStatus');
+                statusEl.innerHTML = "ACTIVE";
+                statusEl.style.color = "green";
+                statusEl.style.fontSize = "150px";
+                statusEl.style.textAlign = "center";
+            }
+        }
+
+        load();
+
+        const interval = setInterval(function() {
+            pollContract();
+        }, 3000);
+        
+    </script>
+</body>
+
+</html>

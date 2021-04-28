@@ -40,7 +40,7 @@ contract SmartContract {
         return doorState;
     }
 
-    function getAccelState() public view returns (uint) {
+    function getAcceleration() public view returns (uint) {
         return acceleration;
     }
 
@@ -55,8 +55,6 @@ contract SmartContract {
         acceleration = 0;
         violated = false;
     }
-
-
 
 }
 

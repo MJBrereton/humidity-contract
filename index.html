@@ -62,7 +62,6 @@
             const account = await getCurrentAccount();
             const status = await window.contract.methods.resetContract().send({ from: account });
             updateStatus('contract reset');
-            // updateStatus('Contract reset');
         }
 
         async function load() {
